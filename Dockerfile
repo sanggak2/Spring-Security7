@@ -1,5 +1,5 @@
 # 자바 17
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk
 
 # 작업 디렉토리
 WORKDIR /app
