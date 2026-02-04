@@ -68,4 +68,7 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.GAR_LOCATION }}
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          flags: '--allow-unauthenticated' # 외부 접속 허용
+          flags: |
+            --allow-unauthenticated
+            --add-cloudsql-instances=compute-engine-486315:asia-northeast3:my-database
+            --set-env-vars=DB_PASSWORD=${{ secrets.DB_PASSWORD }}
