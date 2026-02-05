@@ -37,7 +37,7 @@ public class SecurityConfig {
         // CSRF
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/logout"));
+                        .ignoringRequestMatchers("/logout", "/chat/**", "/api/chat/**"));
         // 로그인 필터
         http
                 .formLogin(login -> login
@@ -71,8 +71,7 @@ public class SecurityConfig {
          */
         http    
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers(/*HttpMethod.GET, Get요청만 받을 수도 잇음*/"/").permitAll()
+                        .requestMatchers(/*HttpMethod.GET, Get요청만 받을 수도 잇음*/"/","/api/chat/**","/chat/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/join","/login").anonymous()
                         .requestMatchers("/user").hasAnyRole("USER") // 둘 중 하나 가지고 있으면 접근 가능
                         .requestMatchers("/admin").access(customAuthorizationManager())
