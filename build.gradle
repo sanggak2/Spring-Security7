@@ -43,7 +43,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'com.mysql:mysql-connector-j:8.4.0'
     implementation 'com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.24.2'
-
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
 }
 
 tasks.named('test') {
