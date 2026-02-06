@@ -1,7 +1,9 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
-# --- 이력서 데이터 구조  ---
+# ==========================================
+# 1. 이력서 분석용 모델 (Resume Analysis)
+# ==========================================
 class Education(BaseModel):
     university: str = Field(description="대학교 이름")
     major: str = Field(description="전공")
@@ -25,8 +27,41 @@ class ResumeAnalysis(BaseModel):
     projects: List[Project]
     awards: List[str] = Field(description="수상 경력")
 
-# --- [신규] 커피챗 데이터 구조 (추가됨) ---
+# ==========================================
+# 2. 커피챗 추천용 모델 (Coffee Chat)
+# ==========================================
 class CoffeeChatRequest(BaseModel):
     company_name: str = Field(description="관심 기업명")
     position: str = Field(description="희망 직무")
     tech_stack: List[str] = Field(description="본인의 주요 기술 스택")
+
+# ==========================================
+# 3. 채용 공고 가공용 모델 (Job Posting ETL)
+# ==========================================
+class SalaryInfo(BaseModel):
+    value: int = Field(description="급여 금액 (숫자만)")
+    unit: str = Field(description="단위 (MONTH, YEAR, HOURLY 중 하나)")
+    currency: str = Field(description="통화 (KRW, USD 등)", default="KRW")
+
+class JobPostingResult(BaseModel):
+    activityId: str = Field(description="공고 ID (원본 유지)")
+    sourceUrl: str = Field(description="원본 링크 (원본 유지)")
+    title: str = Field(description="공고 제목")
+    companyName: str = Field(description="기업명")
+    companyType: Optional[str] = Field(None, description="기업 형태")
+    
+    companyLogo: Optional[str] = Field(None)
+    posterUrl: Optional[str] = Field(None)
+    
+    postedAt: Optional[str] = Field(None, description="게시일 (ISO 8601)")
+    closingAt: Optional[str] = Field(None, description="마감일 (ISO 8601)")
+    
+    location: str = Field(description="근무지 전체 주소")
+    employmentType: List[str] = Field(description="고용 형태")
+    experienceLevel: List[str] = Field(description="경력 요건")
+    
+    # AI가 이미지+텍스트 분석 후 생성하는 핵심 필드
+    qualifications: List[str] = Field(description="지원 자격, 필수 요건, 우대 사항 리스트")
+    salary: Optional[SalaryInfo] = Field(None, description="급여 정보")
+    
+    description: str = Field(description="공고 상세 내용")
