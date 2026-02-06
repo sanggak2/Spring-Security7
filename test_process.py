@@ -1,111 +1,14 @@
 import os
 import json
-import time  # [추가] 시간 지연을 위해 필요
-import requests
-from typing import List, Optional
-from pydantic import BaseModel, Field
+import time
 from google import genai
-from google.genai import types
 from dotenv import load_dotenv
+
+# 로직과 모델 임포트
+from process_data import process_single_posting
 
 load_dotenv()
 API_KEY = os.environ.get("GEMINI_API_KEY")
-
-# --- 데이터 모델 (그대로 유지) ---
-class SalaryInfo(BaseModel):
-    value: int = Field(description="급여 금액 (숫자만)")
-    unit: str = Field(description="단위 (MONTH, YEAR, HOURLY 중 하나)")
-    currency: str = Field(description="통화", default="KRW")
-
-class JobPostingResult(BaseModel):
-    activityId: str = Field(description="공고 ID")
-    sourceUrl: str = Field(description="원본 링크")
-    title: str = Field(description="공고 제목")
-    companyName: str = Field(description="기업명")
-    companyType: Optional[str] = Field(None, description="기업 형태")
-    companyLogo: Optional[str] = Field(None)
-    posterUrl: Optional[str] = Field(None)
-    postedAt: Optional[str] = Field(None, description="게시일")
-    closingAt: Optional[str] = Field(None, description="마감일")
-    location: str = Field(description="근무지")
-    employmentType: List[str] = Field(description="고용 형태")
-    experienceLevel: List[str] = Field(description="경력 요건")
-    qualifications: List[str] = Field(description="지원 자격 및 우대 사항 리스트")
-    salary: Optional[SalaryInfo] = Field(None, description="급여 정보")
-    description: str = Field(description="상세 내용 요약")
-
-# --- [핵심 수정] 재시도 로직이 포함된 AI 호출 함수 ---
-def call_gemini_with_retry(client, contents, retries=5):
-    """429 에러 발생 시 지수 백오프(Exponential Backoff)로 재시도합니다."""
-    base_delay = 5  # 시작 대기 시간 (5초)
-    
-    for attempt in range(retries):
-        try:
-            return client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=JobPostingResult
-                )
-            )
-        except Exception as e:
-            error_msg = str(e)
-            # 429(Rate Limit) 또는 503(Service Unavailable) 에러인 경우
-            if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "503" in error_msg:
-                wait_time = base_delay+1 # 5초 -> 10초 -> 20초 -> 40초...
-                print(f"   ⏳ 429 에러 감지 (요청 과다). {wait_time}초 대기 후 재시도합니다... ({attempt+1}/{retries})")
-                time.sleep(wait_time)
-            else:
-                # 다른 에러면 바로 실패 처리
-                raise e
-    return None
-
-def process_single_posting(raw_data: dict, client: genai.Client) -> Optional[JobPostingResult]:
-    if "error" in raw_data or "jobPosting" not in raw_data:
-        print(f"⚠️ [Skip] 유효하지 않은 데이터: ID {raw_data.get('activityId')}")
-        return None
-
-    try:
-        print(f"🔄 처리 중... ID {raw_data.get('activityId')} ({raw_data['jobPosting'].get('title')})")
-
-        image_bytes = None
-        img_url = raw_data.get("detailImageUrl") or raw_data.get("jobPosting", {}).get("image", {}).get("contentUrl")
-        
-        if img_url:
-            try:
-                img_res = requests.get(img_url, timeout=5)
-                if img_res.status_code == 200:
-                    image_bytes = img_res.content
-            except:
-                pass
-
-        prompt = f"""
-        당신은 채용 공고 데이터 분석 AI입니다.
-        [JSON 데이터]와 [이미지]를 분석하여 최종 데이터를 추출하세요.
-        
-        [규칙]
-        1. JSON 데이터를 우선하되, 'qualifications'와 'salary'는 이미지 텍스트까지 분석해서 채우세요.
-        2. 'companyType'은 JSON에 없으면 기업명으로 추론하세요 (예: (주)대학내일 -> 중견기업/중소기업).
-        
-        [JSON 데이터]
-        {json.dumps(raw_data, ensure_ascii=False)}
-        """
-
-        contents = [prompt]
-        if image_bytes:
-            contents.append(types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"))
-
-        # [수정] 재시도 함수 사용
-        response = call_gemini_with_retry(client, contents)
-        
-        if response:
-            return response.parsed
-        return None
-
-    except Exception as e:
-        print(f"❌ 최종 실패: {str(e)}")
-        return None
 
 if __name__ == "__main__":
     if not API_KEY:
@@ -114,9 +17,7 @@ if __name__ == "__main__":
 
     client = genai.Client(api_key=API_KEY)
 
-    # (이전과 동일한 입력 데이터 test_input_data 사용)
-    # ... 여기에 test_input_data 리스트를 넣어주세요 ...
-    # 편의상 생략했습니다. 위에서 쓰신 리스트 그대로 두시면 됩니다.
+    # --- 테스트 데이터 (사용자 제공) ---
     test_input_data = [
 
     {
@@ -1002,18 +903,22 @@ if __name__ == "__main__":
     }
 
     ]
-    print("--- 🚀 데이터 가공 테스트 (Rate Limit 대응 버전) 시작 ---")
+
+    print("--- 🚀 데이터 가공 테스트 (Responsibilities 추가됨) ---")
     
     final_results = []
     
     for raw_item in test_input_data:
+        # process_data.py에서 가져온 함수 사용
         result = process_single_posting(raw_item, client)
+        
         if result:
             final_results.append(result.model_dump())
             print(f"   ✅ 성공! ({result.companyName})")
         
-        # [중요] 한 건 처리 후 강제로 2초 휴식 (Rate Limit 예방)
-        time.sleep(2)
+        # Rate Limit 방지용 대기
+        print("   💤 3초 대기...")
+        time.sleep(3)
 
     print("\n--- ✅ 최종 결과 (JSON Output) ---")
     print(json.dumps(final_results, indent=2, ensure_ascii=False))

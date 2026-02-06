@@ -41,7 +41,7 @@ class CoffeeChatRequest(BaseModel):
 class SalaryInfo(BaseModel):
     value: int = Field(description="급여 금액 (숫자만)")
     unit: str = Field(description="단위 (MONTH, YEAR, HOURLY 중 하나)")
-    currency: str = Field(description="통화 (KRW, USD 등)", default="KRW")
+    currency: str = Field(description="통화", default="KRW")
 
 class JobPostingResult(BaseModel):
     activityId: str = Field(description="공고 ID (원본 유지)")
@@ -60,8 +60,8 @@ class JobPostingResult(BaseModel):
     employmentType: List[str] = Field(description="고용 형태")
     experienceLevel: List[str] = Field(description="경력 요건")
     
-    # AI가 이미지+텍스트 분석 후 생성하는 핵심 필드
+    responsibilities: List[str] = Field(description="담당 업무, 주요 업무, Role 리스트")
     qualifications: List[str] = Field(description="지원 자격, 필수 요건, 우대 사항 리스트")
-    salary: Optional[SalaryInfo] = Field(None, description="급여 정보")
     
-    description: str = Field(description="공고 상세 내용")
+    salary: Optional[SalaryInfo] = Field(None, description="급여 정보")
+    description: str = Field(description="상세 내용 요약")
