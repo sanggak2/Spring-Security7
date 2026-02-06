@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
-# --- 이력서 데이터 구조 ---
+# --- 이력서 데이터 구조  ---
 class Education(BaseModel):
     university: str = Field(description="대학교 이름")
     major: str = Field(description="전공")
@@ -24,3 +24,9 @@ class ResumeAnalysis(BaseModel):
     certificates: List[str] = Field(description="자격증 목록")
     projects: List[Project]
     awards: List[str] = Field(description="수상 경력")
+
+# --- [신규] 커피챗 데이터 구조 (추가됨) ---
+class CoffeeChatRequest(BaseModel):
+    company_name: str = Field(description="관심 기업명")
+    position: str = Field(description="희망 직무")
+    tech_stack: List[str] = Field(description="본인의 주요 기술 스택")

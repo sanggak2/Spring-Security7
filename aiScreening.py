@@ -1,11 +1,10 @@
 import io
-import os
 import pypdf
 from docx import Document
 from google import genai
 from google.genai import types
 from fastapi import HTTPException
-from models import ResumeAnalysis  # models.py에서 가져옴
+from models import ResumeAnalysis
 
 # --- 1. 파일 텍스트 추출 로직 ---
 def extract_text_from_pdf(file_bytes: bytes) -> str:
@@ -28,7 +27,7 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"DOCX 읽기 실패: {str(e)}")
 
-# --- 2. Gemini AI 호출 로직 ---
+# --- 2. Gemini AI 이력서 분석 로직 ---
 def analyze_resume_with_ai(resume_text: str, api_key: str) -> ResumeAnalysis:
     try:
         client = genai.Client(api_key=api_key)
