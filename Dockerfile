@@ -16,7 +16,7 @@ COPY requirements.txt .
 # 🔥 [핵심 전략: CPU Torch 선점 설치 + 버전 고정]
 # requirements.txt에 torch가 없으므로 여기서 먼저 설치하여 GPU 버전을 방지함.
 # 운영 안정성을 위해 버전을 명시(Pinning)합니다.
-RUN pip install --no-cache-dir torch==2.2.0 --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
 # 5. 나머지 라이브러리 설치
 # requirements.txt에는 sentence-transformers==2.3.1 등이 명시되어 있어야 함
