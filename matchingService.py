@@ -1,9 +1,8 @@
-import numpy as np
-from typing import List
+import logging
 from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 
-from models import ResumeAnalysis, JobPostingResult, JobMatchResult
+# 로깅 설정
+logger = logging.getLogger("uvicorn")
 
 class JobMatcher:
     _instance = None
@@ -12,34 +11,18 @@ class JobMatcher:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(JobMatcher, cls).__new__(cls)
-            print("⚙️ Embedding Model Loading... (all-MiniLM-L6-v2)")
-            # 모델을 싱글톤으로 로드하여 메모리 절약
-            cls._model = SentenceTransformer('all-MiniLM-L6-v2')
-            print("✅ Model Loaded!")
         return cls._instance
 
-    def _create_user_text(self, user: ResumeAnalysis) -> str:
-        """이력서 객체를 하나의 텍스트로 변환"""
-        text = f"희망 직무: {user.desired_job}. "
-        text += f"보유 기술: {', '.join(user.skills)}. "
-        
-        for proj in user.projects:
-            techs = ", ".join(proj.tech_stack)
-            text += f"프로젝트 {proj.name}: {techs} 활용, {proj.description}. "
-            
-        for exp in user.experiences:
-            text += f"{exp} "
-            
-        return text
-
-    def _create_job_text(self, job: JobPostingResult) -> str:
-        """채용공고 객체를 하나의 텍스트로 변환"""
-        text = f"{job.title}. "
-        text += f"담당 업무: {' '.join(job.responsibilities)}. "
-        text += f"자격 요건: {' '.join(job.qualifications)}. "
-        return text
-
-    def calculate_scores(self, user: ResumeAnalysis, jobs: List[JobPostingResult]) -> List[JobMatchResult]:
+    def load_model(self):
+        """모델이 없을 때만 로딩 (Lazy Loading)"""
+        if self._model is None:
+            logger.info("⚙️ [Cold Start] 모델을 메모리에 올리는 중... (약 3~5초 소요)")
+            self._model = SentenceTransformer('all-MiniLM-L6-v2')
+            logger.info("✅ 모델 로딩 완료!")
+    
+    def calculate_scores(self, user, jobs):
+        # 계산 직전에 모델 로딩 확인
+        self.load_model()
         if not jobs:
             return []
 
