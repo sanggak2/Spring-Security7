@@ -1,12 +1,15 @@
 import os
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from typing import Dict, Any
+from fastapi import FastAPI, HTTPException, UploadFile, File, Body
+from google import genai
 
-# 모델 임포트
-from models import CoffeeChatRequest
+# 데이터 모델 임포트
+from models import CoffeeChatRequest, JobPostingResult
 
-# [변경] 로직 파일 분리 임포트
+# 비즈니스 로직 모듈 임포트
 from aiScreening import extract_text_from_pdf, extract_text_from_docx, analyze_resume_with_ai
-from searchService import find_coffee_chat_targets  # <-- 새로 만든 파일에서 가져옴!
+from searchService import find_coffee_chat_targets
+from process_data import process_single_posting
 
 app = FastAPI()
 
@@ -44,6 +47,25 @@ async def generate_coffee_chat_info(request: CoffeeChatRequest):
     # [변경] cx 없이 키만 전달
     result = find_coffee_chat_targets(request, serpapi_key)
     
+    return result
+
+@app.post("/job-posting/analyze", response_model=JobPostingResult)
+async def analyze_job_posting(raw_data: Dict[str, Any] = Body(...)):
+    """
+    [Internal/Admin] Raw JSON 데이터를 받아 AI로 정제된 공고 데이터를 반환합니다.
+    """
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Server Error: GEMINI_API_KEY not configured")
+
+    client = genai.Client(api_key=api_key)
+
+    # process_data.py의 로직 재사용
+    result = process_single_posting(raw_data, client)
+
+    if not result:
+        raise HTTPException(status_code=500, detail="AI 분석에 실패했습니다. (데이터 확인 필요)")
+
     return result
 
 if __name__ == "__main__":
