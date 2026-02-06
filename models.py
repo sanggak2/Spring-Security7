@@ -65,3 +65,17 @@ class JobPostingResult(BaseModel):
     
     salary: Optional[SalaryInfo] = Field(None, description="급여 정보")
     description: str = Field(description="상세 내용 요약")
+
+    # ==========================================
+# 4. [신규] 매칭 결과 모델 (JobPosting + 점수)
+# ==========================================
+class JobMatchResult(JobPostingResult):
+    match_score: float = Field(description="AI 매칭 점수 (0~100)")
+    ai_analysis: str = Field(description="AI 분석 코멘트")
+
+# ==========================================
+# 5. [신규] 매칭 요청 모델
+# ==========================================
+class JobMatchingRequest(BaseModel):
+    user_profile: ResumeAnalysis
+    job_postings: List[JobPostingResult]

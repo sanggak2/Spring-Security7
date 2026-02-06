@@ -8,3 +8,6 @@ python-docx
 python-multipart
 google-search-results
 requests
+sentence-transformers
+scikit-learn
+numpy
