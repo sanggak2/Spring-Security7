@@ -44,21 +44,21 @@ public class SwaggerConfig {
                 .version("1.0.0"); // 버전
     }
 
-    // 사용자용 API 그룹
-    @Bean
-    public GroupedOpenApi userGroup() {
-        return GroupedOpenApi.builder()
-                .group("1. 사용자 API")
-                .pathsToMatch("/user/**", "/join", "/login", "/")
-                .build();
-    }
-
-    // 관리자용 API 그룹
-    @Bean
-    public GroupedOpenApi adminGroup() {
-        return GroupedOpenApi.builder()
-                .group("2. 관리자 API")
-                .pathsToMatch("/admin/**")
-                .build();
-    }
+//    // 사용자용 API 그룹
+//    @Bean
+//    public GroupedOpenApi userGroup() {
+//        return GroupedOpenApi.builder()
+//                .group("1. 사용자 API")
+//                .pathsToMatch("/user/**", "/join", "/login", "/")
+//                .build();
+//    }
+//
+//    // 관리자용 API 그룹
+//    @Bean
+//    public GroupedOpenApi adminGroup() {
+//        return GroupedOpenApi.builder()
+//                .group("2. 관리자 API")
+//                .pathsToMatch("/admin/**")
+//                .build();
+//    }
 }
