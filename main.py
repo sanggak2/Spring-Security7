@@ -36,15 +36,13 @@ async def analyze_resume_file(file: UploadFile = File(...)):
 # --- 2. 커피챗 추천 API ---
 @app.post("/coffee-chat/generate")
 async def generate_coffee_chat_info(request: CoffeeChatRequest):
-    google_api_key = os.environ.get("GOOGLE_API_KEY_2")
-    google_cx = os.environ.get("GOOGLE_CX")
+    serpapi_key = os.environ.get("SERPAPI_KEY")
     
-    # 키가 하나라도 없으면 에러
-    if not google_api_key or not google_cx:
-        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY_2 or GOOGLE_CX not set")
+    if not serpapi_key:
+        raise HTTPException(status_code=500, detail="SERPAPI_KEY not set")
 
-    # searchService에 키 2개를 전달
-    result = find_coffee_chat_targets(request, google_api_key, google_cx)
+    # [변경] cx 없이 키만 전달
+    result = find_coffee_chat_targets(request, serpapi_key)
     
     return result
 

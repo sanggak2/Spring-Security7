@@ -1,35 +1,35 @@
-import requests
+from serpapi import GoogleSearch
 from fastapi import HTTPException
 from models import CoffeeChatRequest
 
-def find_coffee_chat_targets(request: CoffeeChatRequest, api_key: str, cx: str):
+# [변경] cx 파라미터 삭제 (SerpApi는 api_key만 있으면 됨)
+def find_coffee_chat_targets(request: CoffeeChatRequest, api_key: str):
     try:
         # 1. 검색 쿼리 생성
         skills = " ".join(request.tech_stack[:2])
-        # LinkedIn 프로필 검색에 최적화된 쿼리
+        # LinkedIn 프로필 검색 쿼리
         search_query = f"site:linkedin.com/in/ {request.company_name} {request.position} {skills}"
 
-        # 2. Google Custom Search API 호출
-        url = "https://www.googleapis.com/customsearch/v1"
+        # 2. SerpApi 호출 설정 (google-search-results 라이브러리 사용)
         params = {
-            "key": api_key,  # main.py에서 넘겨준 GOOGLE_API_KEY_2
-            "cx": cx,        # main.py에서 넘겨준 GOOGLE_CX
+            "engine": "google",
             "q": search_query,
-            "num": 3         # 결과 개수
+            "api_key": api_key,  # SERPAPI_KEY 사용
+            "num": 3,            # 결과 개수
+            "gl": "kr",          # 한국 지역
+            "hl": "ko"           # 한국어
         }
 
-        response = requests.get(url, params=params)
-        
-        # API 호출 실패 시 예외 처리
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=f"Google Search Error: {response.text}")
-
-        result_data = response.json()
+        # 검색 실행
+        search = GoogleSearch(params)
+        results = search.get_dict()
 
         # 3. 결과 정제
         real_contacts = []
-        if "items" in result_data:
-            for item in result_data["items"]:
+        
+        # 'organic_results'가 실제 검색 결과 목록입니다.
+        if "organic_results" in results:
+            for item in results["organic_results"]:
                 real_contacts.append({
                     "name_and_title": item.get("title"),
                     "profile_url": item.get("link"),
