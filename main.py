@@ -11,8 +11,8 @@ from aiScreening import extract_text_from_pdf, extract_text_from_docx, analyze_r
 from searchService import find_coffee_chat_targets
 from process_data import process_single_posting
 from matchingService import get_matcher
+from resume_optimization import process_cv_optimization, OptimizationRequest
 
-# [삭제됨] from database import save_job_posting  <-- 더 이상 필요 없음
 
 app = FastAPI()
 
@@ -95,6 +95,14 @@ async def recommend_jobs(request: JobMatchingRequest):
     except Exception as e:
         print(f"매칭 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail=f"매칭 분석 실패: {str(e)}")
+
+@app.post("/cv/optimize")
+async def optimize_cv_endpoint(request: OptimizationRequest):
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not set")
+    
+    return await process_cv_optimization(request, api_key)
 
 if __name__ == "__main__":
     import uvicorn
